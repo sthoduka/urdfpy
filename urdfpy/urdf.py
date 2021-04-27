@@ -364,7 +364,7 @@ class Cylinder(URDFType):
     def __init__(self, radius, length):
         self.radius = radius
         self.length = length
-        self._meshes = None
+        self._meshes = []
 
     @property
     def radius(self):
@@ -375,7 +375,7 @@ class Cylinder(URDFType):
     @radius.setter
     def radius(self, value):
         self._radius = float(value)
-        self._meshes = None
+        self._meshes = []
 
     @property
     def length(self):
@@ -386,7 +386,7 @@ class Cylinder(URDFType):
     @length.setter
     def length(self, value):
         self._length = float(value)
-        self._meshes = None
+        self._meshes = []
 
     @property
     def meshes(self):
@@ -397,7 +397,7 @@ class Cylinder(URDFType):
             self._meshes = [trimesh.creation.cylinder(
                 radius=self.radius, height=self.length
             )]
-        return self._mesh
+        return self._meshes
 
     def copy(self, prefix='', scale=None):
         """Create a deep copy with the prefix applied to all names.
@@ -2690,8 +2690,9 @@ class URDF(URDFType):
 
         for x in self._transmissions:
             if x.name in self._transmission_map:
-                raise ValueError('Two transmissions with name {} '
-                                 'found'.format(x.name))
+                print('Two transimissions with name {} found'.format(x.name))
+                #raise ValueError('Two transmissions with name {} '
+                #                 'found'.format(x.name))
             self._transmission_map[x.name] = x
 
         for x in self._materials:
@@ -3547,6 +3548,37 @@ class URDF(URDFType):
             mesh = pyrender.Mesh.from_trimesh(tm, smooth=False)
             scene.add(mesh, pose=pose)
         pyrender.Viewer(scene, use_raymond_lighting=True)
+
+    def create_scene(self, cfg=None, use_collision=False):
+        import pyrender  # Save pyrender import for here for CI
+
+        if use_collision:
+            fk = self.collision_trimesh_fk(cfg=cfg)
+        else:
+            fk = self.visual_trimesh_fk(cfg=cfg)
+
+        #scene = pyrender.Scene(bg_color=(0,0,0,1))
+        scene = pyrender.Scene()
+        mesh_nodes = {}
+        for tm in fk:
+            pose = fk[tm]
+            mesh = pyrender.Mesh.from_trimesh(tm, smooth=False)
+            node = scene.add(mesh, pose=pose)
+            mesh_nodes[tm] = node
+        return scene, mesh_nodes
+
+    def set_scene(self, scene, mesh_nodes, cfg=None, use_collision=False):
+        import pyrender
+        if use_collision:
+            fk = self.collision_trimesh_fk(cfg=cfg)
+        else:
+            fk = self.visual_trimesh_fk(cfg=cfg)
+
+        for tm in fk:
+            pose = fk[tm]
+            mesh_node = mesh_nodes[tm]
+            #mesh = pyrender.Mesh.from_trimesh(tm, smooth=False)
+            scene.set_pose(mesh_node, pose)
 
     def copy(self, name=None, prefix='', scale=None):
         """Make a deep copy of the URDF.

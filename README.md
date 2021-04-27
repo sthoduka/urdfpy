@@ -16,10 +16,14 @@ Extensive API documentation is provided [here](https://urdfpy.readthedocs.io/en/
 </p>
 
 ## Installation
-You can install urdfpy directly from pip.
-
+The original repository can be installed with 
 ```bash
 pip install urdfpy
+```
+However, this fork contains some fixes which are yet to be merged into the original repository ([this](https://github.com/mmatl/urdfpy/pull/6) and [this](https://github.com/mmatl/urdfpy/pull/2). Therefore you can instead install this fork using:
+
+```bash
+pip install git+https://github.com/sthoduka/urdfpy.git
 ```
 
 ## User Guide
